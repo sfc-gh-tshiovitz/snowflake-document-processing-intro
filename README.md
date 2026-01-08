@@ -161,10 +161,6 @@ ALTER STAGE IDENTIFIER($stage_name) REFRESH;
 
 This is included in the scripts but needs to be run after uploading new files.
 
-### Syntax errors when running the whole script
-
-The `DECLARE...END` anonymous blocks must be run individually. Select each block and run it separately rather than using "Run All".
-
 ### "Role does not exist" errors
 
 Make sure you've run `01_setup.sql` first, and that the role was granted to your user.

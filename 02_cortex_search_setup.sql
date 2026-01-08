@@ -30,6 +30,7 @@ SET stage_name = 'FILESTAGE';
 SET raw_text_table = 'RAW_TEXT';
 SET chunks_table = 'DOCS_CHUNKS_TABLE';
 SET search_service_name = 'DEMO_CORTEX_SEARCH_SERVICE';
+SET agent_name = 'DOCUMENT_AGENT';
 
 -- Optional: specific file to test with (set to empty string '' to skip)
 -- Upload files to the stage first, then set this to test a single file
@@ -139,6 +140,17 @@ END;
 
 -- Preview the results (output visible!)
 SELECT * FROM IDENTIFIER($raw_text_table) LIMIT 5;
+
+
+---- OPTIONAL! Use the extracted information to summarize
+-- This can be done in one go, but in this demo we'll break this into multiple steps for clarity
+SELECT 
+    RELATIVE_PATH, 
+    AI_COMPLETE('claude-sonnet-4-5', 'Summarize this document into 2 sentences:' || extracted_layout) as complete_summarize,
+    AI_CLASSIFY(extracted_layout, ['article', 'business document', 'other']):labels as category
+FROM IDENTIFIER($raw_text_table)
+LIMIT 10;
+    
 
 
 -- ============================================
@@ -262,9 +274,64 @@ SELECT PARSE_JSON(
 
 
 -- ============================================
+-- STEP 6: CREATE A CORTEX AGENT (Optional)
+-- ============================================
+-- Cortex Agents combine LLMs with tools (like search) to answer questions.
+-- This agent uses the search service we just created to answer questions
+-- about your documents.
+
+-- Create the agent - Run this block by itself:
+DECLARE
+    db_name VARCHAR := $database_name;
+    sch_name VARCHAR := $schema_name;
+    search_svc VARCHAR := $search_service_name;
+    agt_name VARCHAR := $agent_name;
+    full_search_service VARCHAR;
+    agent_spec VARCHAR;
+BEGIN
+    full_search_service := UPPER(db_name) || '.' || UPPER(sch_name) || '.' || UPPER(search_svc);
+    
+    -- Build the agent specification JSON
+    agent_spec := '{
+        "models": {"orchestration": "auto"},
+        "orchestration": {},
+        "tools": [
+            {
+                "tool_spec": {
+                    "type": "cortex_search",
+                    "name": "Document_Search",
+                    "description": "Search through documents to find relevant information"
+                }
+            }
+        ],
+        "tool_resources": {
+            "Document_Search": {
+                "id_column": "FILE_URL",
+                "max_results": 5,
+                "search_service": "' || full_search_service || '",
+                "title_column": "RELATIVE_PATH"
+            }
+        }
+    }';
+    
+    EXECUTE IMMEDIATE '
+        CREATE OR REPLACE AGENT ' || agt_name || '
+        WITH PROFILE = ''{"display_name": "' || agt_name || '"}''
+        COMMENT = ''Agent that answers questions about your documents using Cortex Search''
+        FROM SPECIFICATION $$' || agent_spec || '$$';
+    
+    RETURN 'Created agent: ' || agt_name || ' using search service: ' || full_search_service;
+END;
+
+-- Verify the agent was created
+SHOW AGENTS;
+
+
+-- ============================================
 -- NEXT STEPS
 -- ============================================
 -- Now you can:
 --   1. Query the search service directly with SEARCH_PREVIEW()
---   2. Create a Cortex Agent that uses this search service for RAG
+--   2. Chat with the agent using INVOKE_AGENT()
 --   3. Build applications that leverage semantic document search
+--   4. Connect the agent to Streamlit or other frontends
