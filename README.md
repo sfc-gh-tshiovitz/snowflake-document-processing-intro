@@ -99,7 +99,7 @@ Create key-question pairs to extract structured data:
 
 ### 4. Run the Cortex Search Setup
 
-Open `03_cortex_search_setup.sql` in a Snowsight worksheet.
+Open `02_cortex_search_setup.sql` in a Snowsight worksheet.
 
 ⚠️ **Important**: Run each section separately (select statements and run). Do NOT use "Run All" because the anonymous blocks (`DECLARE...END`) need to be executed individually.
 
@@ -134,7 +134,7 @@ Creates the infrastructure needed for document processing:
 
 **Run as**: ACCOUNTADMIN (or role with CREATE DATABASE/ROLE privileges)
 
-### 03_cortex_search_setup.sql
+### 02_cortex_search_setup.sql
 
 Processes documents and creates a search service:
 
@@ -159,7 +159,7 @@ The stage directory needs to be refreshed after uploading files:
 ALTER STAGE IDENTIFIER($stage_name) REFRESH;
 ```
 
-This is included in `03_cortex_search_setup.sql` but needs to be run after uploading new files.
+This is included in the scripts but needs to be run after uploading new files.
 
 ### Syntax errors when running the whole script
 
