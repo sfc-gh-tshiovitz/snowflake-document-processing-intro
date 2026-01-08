@@ -119,7 +119,7 @@ Both scripts use parameterized values. Update these at the top of each file:
 | `role_name` | `doc_processing_walkthrough_role` | Role to create/use |
 | `warehouse_name` | `compute_wh` | Warehouse for compute |
 | `stage_name` | `FILESTAGE` | Stage for documents |
-| `user_name` | `tshiovitz` | User to grant role to (setup only) |
+| `user_name` | `<your user>` | User to grant role to (setup only) |
 
 ## Script Details
 
